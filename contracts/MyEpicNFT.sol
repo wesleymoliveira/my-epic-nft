@@ -2,14 +2,12 @@ pragma solidity 0.8.1;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
 import {Base64} from "./libraries/Base64.sol";
 
 contract MyEpicNFT is ERC721URIStorage {
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+    uint256 currentTokenId;
 
     // We split the SVG at the part where it asks for the background color.
     string svgPartOne =
@@ -32,6 +30,7 @@ contract MyEpicNFT is ERC721URIStorage {
     string[] colors = ["red", "#08C2A8", "black", "yellow", "blue", "green"];
 
     event NewEpicNFTMinted(address sender, uint256 tokenId);
+    event TotalTokens(uint256 total);
 
     constructor() ERC721("SquareNFT", "SQUARE") {
         console.log("This is my NFT contract. Woah!");
@@ -91,17 +90,20 @@ contract MyEpicNFT is ERC721URIStorage {
     }
 
     function makeAnEpicNFT() public {
-        uint256 newItemId = _tokenIds.current();
+        require(
+            currentTokenId < 10,
+            "There is no more NFT's available. We already minted 10 NFT's"
+        );
 
-        string memory first = pickRandomFirstWord(newItemId);
-        string memory second = pickRandomSecondWord(newItemId);
-        string memory third = pickRandomThirdWord(newItemId);
+        string memory first = pickRandomFirstWord(currentTokenId);
+        string memory second = pickRandomSecondWord(currentTokenId);
+        string memory third = pickRandomThirdWord(currentTokenId);
         string memory combinedWord = string(
             abi.encodePacked(first, second, third)
         );
 
         // Add the random color in.
-        string memory randomColor = pickRandomColor(newItemId);
+        string memory randomColor = pickRandomColor(currentTokenId);
         string memory finalSvg = string(
             abi.encodePacked(
                 svgPartOne,
@@ -134,16 +136,21 @@ contract MyEpicNFT is ERC721URIStorage {
         console.log(finalTokenUri);
         console.log("--------------------\n");
 
-        _safeMint(msg.sender, newItemId);
+        _safeMint(msg.sender, currentTokenId);
 
-        _setTokenURI(newItemId, finalTokenUri);
+        _setTokenURI(currentTokenId, finalTokenUri);
 
-        _tokenIds.increment();
+        currentTokenId += 1;
         console.log(
             "An NFT w/ ID %s has been minted to %s",
-            newItemId,
+            currentTokenId,
             msg.sender
         );
-        emit NewEpicNFTMinted(msg.sender, newItemId);
+        emit NewEpicNFTMinted(msg.sender, currentTokenId);
+        emit TotalTokens(currentTokenId);
+    }
+
+    function getTotalTokens() public view returns (uint256) {
+        return currentTokenId;
     }
 }

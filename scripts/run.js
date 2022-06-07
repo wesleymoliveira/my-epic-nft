@@ -13,6 +13,12 @@ const main = async () => {
   txn = await nftContract.makeAnEpicNFT();
   // Wait for it to be mined.
   await txn.wait();
+
+  console.log("TOTAL ->");
+
+  // call getTotalTokens fn
+  let total = await nftContract.getTotalTokens();
+  console.log(total);
 };
 
 const runMain = async () => {
